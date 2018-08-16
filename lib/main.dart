@@ -332,7 +332,7 @@ class Entry extends StatelessWidget{
       ),
       alignment: FractionalOffset.centerLeft,
       child: new Image(
-        image: new AssetImage("assets/sleep.png"),
+        image: new AssetImage("assets/planet_sleepy.png"),
         height: 92.0,
         width: 92.0,
       ),
