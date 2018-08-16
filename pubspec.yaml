@@ -47,7 +47,7 @@ flutter:
   fonts:
     - family: Josefin
       fonts:
-        - asset: assets/JosefinSlab-SemiBold.ttf
+        - asset: fonts/JosefinSlab-SemiBold.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

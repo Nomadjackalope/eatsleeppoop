@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
         // or press Run > Flutter Hot Reload in IntelliJ). Notice that the
         // counter didn't reset back to zero; the application is not restarted.
         primarySwatch: Colors.blue,
+        fontFamily: 'Josefin',
       ),
       home: new MyHomePage(title: 'Eat Sleep Poop'),
     );
@@ -69,7 +70,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/notes.json');
+    try {
+      return File('$path/notes.json');
+    } catch (e) {
+      print(e);
+    }
+
+    return null;
   }
 
   Future<File> writeNotes() async {
@@ -175,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
         print("duration " + dur.inSeconds.toString());
         _endNote(dur.inMinutes.toDouble());
       },
-        child: new Text('Sleeping ended'),
+        child: new Text('Sleeping ended', style: new TextStyle(fontFamily: 'Josefin'),),
       ));
     }
 
@@ -274,15 +281,29 @@ class _DialogEntryState extends State<DialogEntry> {
 
 
 class Entry extends StatelessWidget{
-  Entry(this.note);
+  Entry(Note note) :
+    note = note,
+    noteThumb = new Container(
+        margin: new EdgeInsets.symmetric(
+            vertical: 16.0
+        ),
+        alignment: FractionalOffset.centerLeft,
+        child: new Image(
+          image: note.getNoteImage(),
+          height: 92.0,
+          width: 92.0,
+        ),
+      );
+
+
+  final Note note;
+  final Container noteThumb;
 
   final cardTextStyle = const TextStyle(
     fontFamily: 'Josefin',
     color: Colors.white,
-    fontSize: 18.0,
+    fontSize: 21.0,
   );
-
-  final Note note;
 
   Widget makeNoteCard() {
     return new Container(
@@ -326,34 +347,22 @@ class Entry extends StatelessWidget{
     );
   }
 
-    final noteThumb = new Container(
-      margin: new EdgeInsets.symmetric(
-          vertical: 16.0
+  @override
+  Widget build(BuildContext context) {
+    return new Container (
+      height: 120.0,
+      margin: const EdgeInsets.symmetric(
+          vertical: 16.0,
+          horizontal: 24.0
       ),
-      alignment: FractionalOffset.centerLeft,
-      child: new Image(
-        image: new AssetImage("assets/planet_sleepy.png"),
-        height: 92.0,
-        width: 92.0,
+      child: new Stack(
+        children: <Widget>[
+          makeNoteCard(),
+          noteThumb,
+        ],
       ),
     );
-
-    @override
-    Widget build(BuildContext context) {
-      return new Container (
-        height: 120.0,
-        margin: const EdgeInsets.symmetric(
-            vertical: 16.0,
-            horizontal: 24.0
-        ),
-        child: new Stack(
-          children: <Widget>[
-            makeNoteCard(),
-            noteThumb,
-          ],
-        ),
-      );
-    }
+  }
 }
 
 //
@@ -469,5 +478,16 @@ class Note {
         return "$time minutes";
     }
     return "";
+  }
+
+  AssetImage getNoteImage() {
+    switch(getType()) {
+      case NoteType.eat:
+        return new AssetImage("assets/planet_eat.png");
+      case NoteType.sleep:
+        return new AssetImage("assets/planet_sleepy.png");
+      default:
+        return new AssetImage("assets/planet_sleepy.png");
+    }
   }
 }
