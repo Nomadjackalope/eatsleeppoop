@@ -119,9 +119,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Note _prevNote;
 
   List<Widget> buildNotes() {
+    var _endNoteFun = _endNote;
+
     List<Widget> widgets = new List<Widget>();
     for (var i = 0; i < _notes.length; i++) {
-      widgets.add(new Entry(_notes[i]));
+      widgets.add(new Entry(_notes[i], _endNoteFun, _prevNote));
     }
 
     return widgets;
@@ -155,38 +157,58 @@ class _MyHomePageState extends State<MyHomePage> {
     writeNotes();
   }
 
-  List<Widget> getButtons() {
-    List<Widget> widgets = new List<Widget>();
-
-    if(_prevNote == null) {
-      widgets.add(new RaisedButton(onPressed: () {
-        _addNote(NoteType.eat);
-      },
-        child: new Text('Eating started'),
-      ));
-
-      widgets.add(new RaisedButton(onPressed: () {
-        _addNote(NoteType.sleep);
-      },
-        child: new Text('Sleeping started'),
-      ));
-    } else if (_prevNote.getType() == NoteType.eat) {
-      widgets.add(new RaisedButton(onPressed: () {
-        _foobar();
-      },
-        child: new Text('Eating ended'),
-      ));
-    } else if (_prevNote.getType() == NoteType.sleep) {
-      widgets.add(new RaisedButton(onPressed: () {
-        Duration dur = DateTime.now().difference(_prevNote.getBeginTime());
-        print("duration " + dur.inSeconds.toString());
-        _endNote(dur.inMinutes.toDouble());
-      },
-        child: new Text('Sleeping ended', style: new TextStyle(fontFamily: 'Josefin'),),
-      ));
+  Widget getButtonBar() {
+    if(_prevNote != null) {
+      return new Container();
     }
+    return new Container(
+      height: 120.0,
+      margin: new EdgeInsets.only(left: 48.0, right: 16.0),
+      constraints: new BoxConstraints.expand(height: 120.0),
+      decoration: new BoxDecoration(
+          shape: BoxShape.rectangle,
+          color: new Color(0xFF443366),
+          borderRadius: new BorderRadius.circular(8.0),
+          boxShadow: <BoxShadow>[
+            new BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10.0,
+                offset: new Offset(2.0, 10.0)
+            )
+          ]
+      ),
+      child: new ButtonBar(
+        alignment: MainAxisAlignment.center,
+        children: getIconButtons(),
+      ),
+    );
+  }
 
-    return widgets;
+  List<Widget> getIconButtons() {
+    List<Widget> _widgets = new List<Widget>(2);
+
+    _widgets[0] = new FlatButton.icon(
+        onPressed: () {
+          _addNote(NoteType.sleep);
+        },
+        icon: new Image(
+          width: 92.0,
+          height: 92.0,
+          image: new AssetImage("assets/planet_sleepy.png")),
+        label: new Container());
+
+    _widgets[1] = new FlatButton.icon(
+        onPressed: () {
+          _addNote(NoteType.eat);
+        },
+        icon: new Image(
+            width: 92.0,
+            height: 92.0,
+            image: new AssetImage("assets/planet_eat.png")),
+        label: new Container());
+
+
+    return _widgets;
   }
 
   @override
@@ -210,79 +232,20 @@ class _MyHomePageState extends State<MyHomePage> {
               children: buildNotes(),
             )
           ),
-          new Container(
-            color: Colors.blueGrey,
-            height: 100.0,
-            child: new ButtonBar(
-              alignment: MainAxisAlignment.center,
-              children: getButtons(),
-            )
-          )
+          getButtonBar(),
         ],
       ),// This trailing comma makes auto-formatting nicer for build methods.
     );
   }
-
-  Future _foobar() async {
-    await showDialog(
-      context: context,
-      child: new SimpleDialog(
-        title: const Text('Ounces of milk'),
-        children: <Widget>[
-          new DialogEntry()
-        ],
-      )
-    ).then((data) {
-      if(data > 0) {
-      _endNote(data);
-      }
-    });
-  }
-}
-
-class DialogEntry extends StatefulWidget {
-  DialogEntry({Key key}) : super(key: key);
-
-  @override
-  _DialogEntryState createState() => new _DialogEntryState();
-}
-
-class _DialogEntryState extends State<DialogEntry> {
-  double _ounces = 3.0;
-  @override
-  Widget build(BuildContext context) {
-    return new Column(
-      children: <Widget>[
-      new Slider(
-        value: _ounces,
-        onChanged: (val) {
-          setState(() => _ounces = val);
-        },
-        min: 0.5,
-        max: 10.0,
-        divisions: 19,
-      ),
-      new ButtonBar(
-      children: <Widget>[
-        new FlatButton(onPressed: () {
-          Navigator.of(context).pop();
-        }, child: new Text('Cancel')),
-        new RaisedButton(onPressed: () {
-          Navigator.of(context).pop(_ounces);
-        }, child: new Text("$_ounces oz"))
-        ],
-      )
-      ],
-    );
-  }
-
 }
 
 
 
 class Entry extends StatelessWidget{
-  Entry(Note note) :
+  Entry(Note note, void endNote, Note prevNote) :
     note = note,
+    endNote = endNote,
+    prevNote = prevNote,
     noteThumb = new Container(
         margin: new EdgeInsets.symmetric(
             vertical: 16.0
@@ -297,7 +260,9 @@ class Entry extends StatelessWidget{
 
 
   final Note note;
+  final dynamic endNote;
   final Container noteThumb;
+  final Note prevNote;
 
   final cardTextStyle = const TextStyle(
     fontFamily: 'Josefin',
@@ -342,9 +307,31 @@ class Entry extends StatelessWidget{
             ),
           ),
           new Text(note.getAmountString(), style: cardTextStyle,),
+          // this should only be added if the endnote if this is not null
+
+          getFinishButton(),
         ],
       ),
     );
+  }
+
+  Widget getFinishButton() {
+    if(prevNote == note) {
+      switch(note.getType()) {
+        case NoteType.sleep:
+          return new RaisedButton(
+            onPressed: () {
+                Duration dur = DateTime.now().difference(note.getBeginTime());
+                print("duration " + dur.inSeconds.toString());
+                endNote(dur.inMinutes.toDouble());
+            },
+            child: new Text("Finish"),
+          );
+        case NoteType.eat:
+          return new CardValue(NoteType.eat, endNote);
+        }
+    }
+  return new Container();
   }
 
   @override
@@ -364,6 +351,55 @@ class Entry extends StatelessWidget{
     );
   }
 }
+
+class CardValue extends StatefulWidget {
+  CardValue(this.type, this.endNote, {Key key}) : super(key: key);
+
+  final NoteType type;
+  final dynamic endNote;
+
+  @override
+  _CardValueState createState() => new _CardValueState(type, endNote);
+}
+
+class _CardValueState extends State<CardValue> {
+
+  _CardValueState(this.type, this.endNote);
+
+  final NoteType type;
+  final dynamic endNote;
+
+  double _ounces = 6.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Container (
+      child: Row(
+        children: <Widget>[
+          new Slider(
+            value: _ounces,
+            onChanged: (val) {
+              setState(() {
+                _ounces = val;
+              });
+            },
+            min: 0.5,
+            max: 10.0,
+            divisions: 19,
+          ),
+          new RaisedButton(
+            onPressed: () {
+              print("hi");
+              endNote(_ounces);
+            },
+            child: new Text("$_ounces oz"),
+          )
+        ],
+      ),
+    );
+  }
+}
+
 
 //
 //enum RecordType {
