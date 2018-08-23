@@ -55,7 +55,9 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         //print(val);
         _notes = val;
-        _prevNote = _notes.last;
+        if(_notes.last.amount < 0) {
+          _prevNote = _notes.last;
+        }
       });
     });
   }
